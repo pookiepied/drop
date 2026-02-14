@@ -1,0 +1,57 @@
+{
+  "name": "Drop - Secure P2P File Sharing",
+  "short_name": "Drop",
+  "description": "Peer-to-peer file sharing without servers. No cloud. No trace. End-to-end encrypted.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0c0e",
+  "theme_color": "#e8ff6e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "social-preview.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["utilities", "productivity", "file-sharing"],
+  "shortcuts": [
+    {
+      "name": "Create Drop",
+      "short_name": "Create",
+      "description": "Create a new file sharing session",
+      "url": "/",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Join Drop",
+      "short_name": "Join",
+      "description": "Join an existing file sharing session",
+      "url": "/",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

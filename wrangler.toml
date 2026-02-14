@@ -1,0 +1,18 @@
+name = "drop-signal"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Cloudflare Realtime TURN server configuration
+# Set during deployment
+# TURN_KEY_ID = "your_turn_key_id"
+# TURN_API_TOKEN = "your_turn_api_token"
+
+# Durable Objects bindings
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

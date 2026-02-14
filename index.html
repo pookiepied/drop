@@ -1,0 +1,4159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Drop</title>
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="manifest" href="/manifest.json">
+
+<!-- Social Media Meta Tags -->
+<meta name="description" content="Peer-to-peer file sharing without servers. No cloud. No trace. End-to-end encrypted.">
+<meta property="og:title" content="drop. - Secure P2P File Sharing">
+<meta property="og:description" content="Peer-to-peer file sharing without servers. No cloud. No trace. End-to-end encrypted.">
+<meta property="og:image" content="social-preview.png">
+<meta property="og:url" content="https://drop.pookiepied.workers.dev">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="drop. - Secure P2P File Sharing">
+<meta name="twitter:description" content="Peer-to-peer file sharing without servers. No cloud. No trace. End-to-end encrypted.">
+<meta name="twitter:image" content="social-preview.png">
+<style>
+  /* Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
+
+  /* Reset & Base styles */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0c0c0e;
+    --surface: #141416;
+    --border:  #2a2a2e;
+    --dim:     #3a3a40;
+    --muted:   #666670;
+    --text:    #e8e8ee;
+    --accent:  #e8ff6e;       /* Electric chartreuse */
+    --accent2: #6effd8;       /* Mint */
+    --danger:  #ff6e6e;
+    --radius:  12px;
+    --mono:    'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Layout */
+  body {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 40px;
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+    display: block;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s ease;
+  }
+  
+  .wordmark:hover {
+    color: var(--text);
+  }
+  
+  .wordmark:active {
+    color: var(--muted);
+  }
+  
+  .clickable {
+    cursor: pointer;
+    user-select: none;
+  }
+  
+
+
+  .tagline {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* Info Section */
+  .info-section {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .info-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--display);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .info-toggle:hover {
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--dim);
+  }
+
+  .info-content {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .info-content.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .info-card {
+    padding: 16px;
+  }
+
+  .info-card h3 {
+    color: var(--accent);
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+
+  .info-card p {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  .info-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Toggle Header */
+  .toggle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .toggle-arrow {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .toggle-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .toggle-content.collapsed {
+    max-height: 0;
+  }
+
+  .toggle-arrow.rotated {
+    transform: rotate(180deg);
+  }
+
+  /* Completely minimalist approach - no containers */
+  .card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+  }
+    
+  /* Remove all section containers */
+  .section-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+  }
+    
+  /* Minimalist labels */
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  /* Room info sections */
+  .room-info-section {
+    margin-top: 24px;
+  }
+
+  .divider {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 20px 0 12px 0;
+    position: relative;
+    text-align: center;
+  }
+
+  .divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border);
+    z-index: 1;
+  }
+
+  .divider span {
+    background: var(--surface);
+    padding: 0 12px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .id-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .id-value {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+  }
+
+  .copy-btn {
+    font-size: 10px;
+    padding: 6px 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    min-height: 20px;
+    margin-top: 20px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { border-color: var(--dim); background: #1a1a1e; }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0c0c0e;
+    font-weight: 500;
+  }
+
+  .btn-primary:hover { background: #d8ef5e; border-color: #d8ef5e; }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: rgba(255,110,110,0.08); }
+
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .drop-zone:hover,
+  .drop-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(232,255,110,0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    display: block;
+    color: var(--muted);
+    transition: color 0.2s ease, transform 0.2s ease;
+    opacity: 0.6;
+  }
+  
+  .drop-zone:hover .drop-icon,
+  .drop-zone.dragover .drop-icon {
+    color: var(--accent);
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  .drop-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .drop-zone:hover .drop-label,
+  .drop-zone.dragover .drop-label {
+    color: var(--accent);
+  }
+
+  .drop-hint {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .drop-name {
+    color: var(--accent2);
+    font-size: 12px;
+    margin-top: 8px;
+    word-break: break-all;
+    display: none;
+  }
+
+  /* Input */
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .text-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .text-input:focus { border-color: var(--accent); }
+  .text-input::placeholder { color: var(--muted); }
+
+  /* Enhanced Room Input */
+  .room-input-wrapper {
+    position: relative;
+  }
+
+  .room-input {
+    width: 100%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .room-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(232, 255, 110, 0.05);
+  }
+
+  .room-input::placeholder {
+    color: var(--dim);
+    opacity: 0.5;
+  }
+
+  .input-label {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ID display */
+  .id-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .id-value {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+  }
+
+  .copy-btn {
+    font-size: 10px;
+    padding: 4px 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Status bar */
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    min-height: 20px;
+    margin-top: 14px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .dot.green  { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .dot.yellow { background: var(--accent);  box-shadow: 0 0 6px var(--accent); }
+  .dot.red    { background: var(--danger);  box-shadow: 0 0 6px var(--danger); }
+  .dot.pulse  { animation: pulse 1.4s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  /* Progress */
+  .progress-wrap {
+    margin-top: 14px;
+    display: none;
+  }
+  
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+  
+  .speed-display {
+    font-size: 11px;
+    color: var(--accent2);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-top: 12px; /* Spacing from progress bar */
+  }
+  
+  .eta-display {
+    font-size: 11px;
+    color: var(--accent2);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-top: 8px; /* Spacing from speed display */
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius);
+    width: 0%;
+    transition: width 0.2s;
+  }
+
+  /* File queue (receiver) */
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .file-item-name {
+    flex: 1;
+    color: var(--text);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-item-size {
+    color: var(--muted);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Center Trigger Container */
+  .center-trigger-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 20px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+
+  .btn-icon-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.06em;
+  }
+
+  .btn-icon-trigger:hover {
+    border-color: var(--dim);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .btn-icon-trigger svg {
+    transition: transform 0.2s ease;
+  }
+
+  .btn-icon-trigger:hover svg {
+    transform: scale(1.1);
+  }
+
+  .trigger-text {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Toggle Button Container */
+  .toggle-buttons-container {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 0 24px;
+  }
+
+  .toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    letter-spacing: 0.06em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .toggle-btn.active {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .toggle-btn:not(.active):hover {
+    border-color: var(--dim);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .toggle-btn svg {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .toggle-btn.active svg {
+    color: var(--accent);
+    transform: scale(1.1);
+  }
+
+  .toggle-btn .trigger-text {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  /* View Containers */
+  .view-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .view-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.98);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1;
+  }
+
+  .view-content.active {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    z-index: 2;
+  }
+
+  /* Smooth Animations */
+  /* Slide-down animation with Apple-inspired easing */
+  .slide-down-enter {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .slide-down-enter-active {
+    max-height: 600px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .slide-down-exit {
+    max-height: 600px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.55, 0.06, 0.68, 0.19), 
+                opacity 0.4s cubic-bezier(0.55, 0.06, 0.68, 0.19), 
+                transform 0.4s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  }
+
+  .slide-down-exit-active {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+
+  /* Room info reveal animation */
+  .room-info-enter {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .room-info-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* QR code box animation */
+  .qr-box-enter {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s,
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s;
+  }
+
+  .qr-box-enter-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  /* Staggered item animations */
+  .animate-stagger {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .animate-stagger.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .animate-stagger:nth-child(1) { transition-delay: 0.1s; }
+  .animate-stagger:nth-child(2) { transition-delay: 0.15s; }
+  .animate-stagger:nth-child(3) { transition-delay: 0.2s; }
+  .animate-stagger:nth-child(4) { transition-delay: 0.25s; }
+
+  /* Footer */
+  footer {
+    margin-top: 48px;
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  /* footer::before {
+    content: '';
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  } */
+
+  .brand-tagline {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+  
+  .creator-credit {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    margin-top: 12px;
+    font-weight: 300;
+  }
+  
+  .bottom-links {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .bottom-links a {
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  
+  .bottom-links a:hover {
+    background: var(--bg);
+    border-color: var(--dim);
+    transform: scale(1.1);
+  }
+  
+  .icon-svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  .mt-12  { margin-top: 12px; }
+  .mt-16  { margin-top: 16px; }
+  .mt-20  { margin-top: 20px; }
+  .mt-24  { margin-top: 24px; }
+  .mt-32  { margin-top: 32px; }
+  .mt-40  { margin-top: 40px; }
+  .gap-8  { gap: 8px; }
+  .flex   { display: flex; }
+  
+  /* QR Code Floating Box */
+  .qr-floating-box {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 160px;
+    text-align: center;
+    /* Premium slide animation */
+    transform: translateX(0);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .qr-floating-box.hidden {
+    transform: translateX(120%);
+  }
+  
+  /* QRious styles */
+  .qrious-canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border-radius: 8px; /* Soft rounded edges for premium look */
+    overflow: hidden;
+  }
+  
+  .qr-floating-box h3 {
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .qr-floating-box canvas {
+    width: 120px;
+    height: 120px;
+    image-rendering: pixelated;
+    margin: 0 auto 12px auto; /* Center QR code with bottom margin */
+    display: block;
+    border-radius: 8px; /* Soft rounded edges for premium look */
+    overflow: hidden;
+  }
+  
+  .qr-floating-box .qr-status {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 0 16px 0; /* Bottom margin for spacing */
+    min-height: 16px;
+  }
+  
+  .qr-floating-box .btn {
+    width: 100%;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  /* QR Scanner Button Styles */
+  .btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover {
+    background: var(--dim);
+    border-color: var(--muted);
+  }
+
+  /* Info Card Styles */
+  .card-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .card-info .card-label {
+    color: var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Flex utility classes */
+  .flex {
+    display: flex;
+  }
+  
+  .gap-8 {
+    gap: 8px;
+  }
+/* QR Scanner Section Styles */
+#qr-scanner-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Full viewport coverage */
+  margin: 0;
+  padding: 0;
+  /* Mobile viewport fixes */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* Additional mobile fixes */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  /* Prevent any scrolling issues */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scanner-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  min-height: 0; /* Allow flex item to shrink */
+}
+
+.video-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  /* Mobile-optimized full viewport */
+  width: 100%;
+  height: 100%;
+  /* Ensure proper centering on mobile */
+  -webkit-transform: translateZ(0); /* Force hardware acceleration */
+  transform: translateZ(0);
+  /* Additional mobile rendering fixes */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+#qr-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Changed back to cover for better mobile experience */
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Mobile optimizations */
+  max-width: none;
+  max-height: none;
+  /* Hardware acceleration for smoother performance */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* Mobile-specific video optimizations */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  /* Prevent zoom on focus */
+  touch-action: manipulation;
+}
+
+.scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.scan-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70vmin; /* Responsive sizing based on viewport minimum */
+  height: 70vmin; /* Square shape */
+  max-width: 280px; /* Optimized for mobile */
+  max-height: 280px;
+  border: 3px solid var(--accent); /* Clean border */
+  border-radius: var(--radius);
+  box-shadow: 
+    0 0 0 100vmax rgba(0, 0, 0, 0.6), /* Darker overlay for better contrast */
+    0 0 15px var(--accent); /* Subtle glow */
+  z-index: 10;
+  /* Mobile-friendly animation */
+  animation: scanner-pulse 2s infinite;
+  /* Better mobile positioning */
+  -webkit-transform: translate(-50%, -50%) translateZ(0);
+  transform: translate(-50%, -50%) translateZ(0);
+  /* Mobile rendering optimizations */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .scan-frame {
+    width: 80vmin;
+    height: 80vmin;
+    max-width: 250px;
+    max-height: 250px;
+  }
+  
+  .instructions-text {
+    font-size: 16px; /* Slightly smaller for mobile */
+  }
+}
+
+.scan-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--accent);
+}
+
+.corner-tl { top: -3px; left: -3px; border-right: none; border-bottom: none; border-top-left-radius: var(--radius); }
+.corner-tr { top: -3px; right: -3px; border-left: none; border-bottom: none; border-top-right-radius: var(--radius); }
+.corner-bl { bottom: -3px; left: -3px; border-right: none; border-top: none; border-bottom-left-radius: var(--radius); }
+.corner-br { bottom: -3px; right: -3px; border-left: none; border-top: none; border-bottom-right-radius: var(--radius); }
+
+.scan-instructions {
+  padding: 24px 20px;
+  background: linear-gradient(transparent, var(--bg) 30%);
+  text-align: center;
+}
+
+.instructions-text {
+  font-size: 18px; /* Larger text */
+  font-weight: 500; /* Bold text */
+  color: var(--text);
+  margin-bottom: 16px;
+  line-height: 1.4;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Text shadow for better readability */
+}
+
+.status-text {
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 16px;
+}
+
+.status-success {
+  color: var(--accent);
+}
+
+.status-error {
+  color: var(--danger);
+}
+
+.scanner-controls {
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+/* Animation for scanning feedback */
+@keyframes scan-pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+@keyframes scanner-pulse {
+  0% { 
+    box-shadow: 
+      0 0 0 100vmax rgba(0, 0, 0, 0.7),
+      0 0 20px var(--accent);
+  }
+  50% { 
+    box-shadow: 
+      0 0 0 100vmax rgba(0, 0, 0, 0.7),
+      0 0 30px var(--accent),
+      0 0 40px var(--accent);
+  }
+  100% { 
+    box-shadow: 
+      0 0 0 100vmax rgba(0, 0, 0, 0.7),
+      0 0 20px var(--accent);
+  }
+}
+
+.scanning .scan-frame {
+  animation: scan-pulse 1.5s infinite;
+}
+
+/* Enter/Exit animations */
+#qr-scanner-section {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease;
+}
+
+#qr-scanner-section.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .scan-frame {
+    width: 85vmin;
+    height: 85vmin;
+    max-width: 220px;
+    max-height: 220px;
+  }
+  
+  .instructions-text {
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 600px) {
+  .scan-instructions {
+    padding: 16px 20px;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .scan-frame {
+    width: 60vmin;
+    height: 60vmin;
+    max-width: 200px;
+    max-height: 200px;
+  }
+  
+  .instructions-text {
+    font-size: 12px;
+  }
+  
+  .scan-instructions {
+    padding: 12px 20px;
+  }
+
+  /* PWA Install Component */
+  .pwa-install-prompt {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .install-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .install-btn:hover {
+    background: var(--bg);
+    border-color: var(--dim);
+  }
+
+  .install-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .install-tooltip {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    width: 250px;
+    margin-bottom: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .install-btn:hover + .install-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .install-tooltip p {
+    color: var(--text);
+    font-size: 11px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .install-tooltip ul {
+    margin: 0;
+    padding-left: 12px;
+  }
+
+  .install-tooltip li {
+    color: var(--muted);
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .install-success {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--bg);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 12px;
+    z-index: 2000;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { transform: translate(-50%, -100%); }
+    to { transform: translate(-50%, 0); }
+  }
+  
+  /* Feature Tooltips */
+  .feature-tooltip {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+  
+  .feature-tooltip.tooltip-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  
+  .tooltip-content h4 {
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 0 0 6px 0;
+    font-weight: 500;
+  }
+  
+  .tooltip-content p {
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 0 0 8px 0;
+  }
+  
+  .tooltip-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+  
+  .tooltip-close:hover {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <span class="wordmark clickable" id="home-link">drop.</span>
+    <p class="tagline">peer-to-peer &middot; no server &middot; no trace</p>
+  </header>
+
+  <!-- Toggle buttons -->
+  <div class="toggle-buttons-container">
+    <button class="toggle-btn active" id="create-drop-btn" title="Create a drop">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="trigger-text">Create a Drop</span>
+    </button>
+    <button class="toggle-btn" id="join-drop-btn" title="Join a drop">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="trigger-text">Join a Drop</span>
+    </button>
+  </div>
+
+  <!-- View container -->
+  <div class="view-container">
+    <!-- Create drop view -->
+    <div class="view-content active" id="create-view">
+      <section id="send-section">
+        <div class="card">
+          <p class="card-label">Create a drop</p>
+          
+          <!-- File picker -->
+          <div class="drop-zone mt-24" id="drop-zone">
+            <input type="file" id="file-input" />
+            <div class="drop-label">
+              <svg class="drop-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>SELECT FILE</span>
+            </div>
+            <p class="drop-name" id="drop-name"></p>
+          </div>
+
+          <div class="mt-16">
+            <button class="btn btn-primary btn-full" id="share-btn" disabled>
+              Create drop
+            </button>
+          </div>
+
+          <!-- Minimalist approach -->
+          <div id="send-room-info" class="hidden">
+            <div class="divider"><span>share this code</span></div>
+            <div class="id-display">
+              <span class="id-value" id="room-id-display">——</span>
+              <button class="btn copy-btn" id="copy-btn">copy</button>
+            </div>
+            
+            <div class="divider"><span>or share this link</span></div>
+            <div class="id-display">
+              <span class="id-value" id="link-display" style="font-size: 12px; letter-spacing: 0.1em;">——</span>
+              <button class="btn copy-btn" id="copy-link-btn">copy</button>
+            </div>
+            
+            <div class="status mt-24">
+              <span class="dot pulse yellow" id="send-dot"></span>
+              <span id="send-status-text">Waiting for peer…</span>
+            </div>
+            
+            <div class="progress-wrap mt-16" id="send-progress-wrap">
+              <div class="progress-meta">
+                <span id="send-progress-label">Sending…</span>
+                <span id="send-progress-pct">0%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="send-progress-fill"></div></div>
+              <div class="speed-display" id="send-speed-display">—</div>
+              <div class="eta-display" id="send-eta-display">—</div>
+              <div class="flex mt-12 gap-8">
+                <button class="btn" id="pause-send-btn">Pause</button>
+                <button class="btn" id="resume-send-btn" disabled>Resume</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Join drop view -->
+    <div class="view-content" id="join-view">
+      <section id="receive-section">
+        <div class="card">
+          <p class="card-label">Join a drop</p>
+          
+          <!-- Minimalist room input -->
+          <div class="room-input-wrapper mt-24">
+            <label class="input-label">Enter Room Code</label>
+            <input 
+              type="text" 
+              class="room-input" 
+              id="room-code-input" 
+              placeholder="ABC123"
+              maxlength="6"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          
+          <div class="mt-16">
+            <button class="btn btn-primary btn-full" id="join-btn">Join Drop</button>
+          </div>
+
+          <!-- QR scanner button -->
+          <div class="mt-16" id="qr-scanner-container">
+            <button class="btn btn-secondary btn-full" id="scan-qr-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                <path d="M3 7V5C3 3.89543 3.89543 3 5 3H7M3 17V19C3 20.1046 3.89543 21 5 21H7M17 3H19C20.1046 3 21 3.89543 21 5V7M17 21H19C20.1046 21 21 20.1046 21 19V17M12 8V16M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Scan QR Code
+            </button>
+          </div>
+
+          <!-- QR scanner section -->
+          <div id="qr-scanner-section" class="hidden">
+            <div class="scanner-container">
+              <div class="video-container">
+                <video id="qr-video" playsinline autoplay muted></video>
+                <div class="scan-overlay">
+                  <div class="scan-frame">
+                    <div class="scan-corner corner-tl"></div>
+                    <div class="scan-corner corner-tr"></div>
+                    <div class="scan-corner corner-bl"></div>
+                    <div class="scan-corner corner-br"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="scan-instructions">
+                <p class="instructions-text">Point your camera at a QR code</p>
+                <p class="status-text" id="qr-status-text">Initializing camera...</p>
+              </div>
+              
+              <div class="scanner-controls">
+                <button class="btn btn-secondary" id="close-scanner-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+
+          <!-- Minimalist approach -->
+          <div id="receive-room-info" class="hidden">
+            <div class="status mt-24">
+              <span class="dot pulse yellow" id="recv-dot"></span>
+              <span id="recv-status-text">Connecting…</span>
+            </div>
+            
+            <div class="file-list mt-20" id="file-list"></div>
+            
+            <div class="progress-wrap mt-24" id="recv-progress-wrap">
+              <div class="progress-meta">
+                <span id="recv-progress-label">Receiving…</span>
+                <span id="recv-progress-pct">0%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="recv-progress-fill"></div></div>
+              <div class="speed-display" id="recv-speed-display">—</div>
+              <div class="eta-display" id="recv-eta-display">—</div>
+              <div class="flex mt-12 gap-8">
+                <button class="btn" id="pause-recv-btn">Pause</button>
+                <button class="btn" id="resume-recv-btn" disabled>Resume</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+    <!-- Info section -->
+  <div class="info-section">
+    <button class="info-toggle" id="info-toggle">i</button>
+    <div class="info-content" id="info-content">
+      <div class="info-card">
+        <h3>About drop.</h3>
+        <p>Peer-to-peer file sharing without servers.</p>
+        <p>No cloud. No trace. End-to-end encrypted.</p>
+        <p>Data travels directly between peers.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>drop.</div>
+    <div class="brand-tagline">secure peer-to-peer file sharing</div>
+    <div class="creator-credit">personal project by pookiepied</div>
+  </footer>
+  
+  <!-- Links -->
+  <div class="bottom-links">
+    <a href="https://github.com/pookiepied/drop" target="_blank" rel="noopener" title="GitHub Repository">
+      <svg class="icon-svg" viewBox="0 0 16 16">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+    </a>
+    <a href="https://pookiepied.dev" target="_blank" rel="noopener" title="Personal Website">
+      <svg class="icon-svg" viewBox="0 0 16 16">
+        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0Zm5.257-3.056a.25.25 0 0 0-.357.196.25.25 0 0 0 .193.305.25.25 0 0 0 .283-.193.25.25 0 0 0-.193-.283.25.25 0 0 0-.283.193Zm2.043 2.088a.25.25 0 0 0-.357.196.25.25 0 0 0 .193.305.25.25 0 0 0 .283-.193.25.25 0 0 0-.193-.283.25.25 0 0 0-.283.193Zm-3.7 1.94a.25.25 0 0 0-.357.196.25.25 0 0 0 .193.305.25.25 0 0 0 .283-.193.25.25 0 0 0-.193-.283.25.25 0 0 0-.283.193Zm5.45 2.168a.25.25 0 0 0-.193.305.25.25 0 0 0 .283.193.25.25 0 0 0 .193-.283.25.25 0 0 0-.283-.193.25.25 0 0 0-.193.283Zm-8.297-.806a.25.25 0 0 0-.193.305.25.25 0 0 0 .283.193.25.25 0 0 0 .193-.283.25.25 0 0 0-.283-.193.25.25 0 0 0-.193.283ZM8 9.5a.5.5 0 0 1 .5-.5.5.5 0 0 1 0 1 .5.5 0 0 1-.5-.5Z"/>
+      </svg>
+    </a>
+  </div>
+
+</div><!-- .app -->
+
+<script>
+// Toggle info section
+const infoToggle = document.getElementById('info-toggle');
+const infoContent = document.getElementById('info-content');
+
+infoToggle.addEventListener('click', () => {
+  infoContent.classList.toggle('visible');
+});
+
+// Toggle between Create and Join views
+const createDropBtn = document.getElementById('create-drop-btn');
+const joinDropBtn = document.getElementById('join-drop-btn');
+const createView = document.getElementById('create-view');
+const joinView = document.getElementById('join-view');
+
+function switchToCreateView() {
+  // Update button states
+  createDropBtn.classList.add('active');
+  joinDropBtn.classList.remove('active');
+  
+  // Switch views with animation
+  joinView.classList.remove('active');
+  
+  // Trigger reflow
+  void joinView.offsetWidth;
+  
+  // Add active class to create view
+  createView.classList.add('active');
+  
+  // Focus on file input
+  setTimeout(() => {
+    document.getElementById('file-input')?.focus();
+  }, 400);
+}
+
+function switchToJoinView() {
+  // Update button states
+  joinDropBtn.classList.add('active');
+  createDropBtn.classList.remove('active');
+  
+  // Switch views with animation
+  createView.classList.remove('active');
+  
+  // Trigger reflow
+  void createView.offsetWidth;
+  
+  // Add active class to join view
+  joinView.classList.add('active');
+  
+  // Focus on room code input
+  setTimeout(() => {
+    document.getElementById('room-code-input')?.focus();
+  }, 400);
+}
+
+// Event listeners for toggle buttons
+createDropBtn.addEventListener('click', switchToCreateView);
+joinDropBtn.addEventListener('click', switchToJoinView);
+
+// Initial setup - Create view is active by default
+switchToCreateView();
+</script>
+
+<!-- QR code box -->
+<div id="qr-floating-box" class="qr-floating-box hidden">
+  <h3>Scan to Join</h3>
+  <div id="qr-room-id" style="font-size: 14px; font-weight: 500; color: var(--accent); margin: 8px 0;">—</div>
+  <canvas id="qr-canvas" width="120" height="120"></canvas>
+  <div class="qr-status" id="qr-status">Ready to generate</div>
+  <button class="btn btn-primary" id="close-qr-btn">Close</button>
+</div>
+
+<script>
+/*
+ * CONFIG
+ */
+
+// Deployed Cloudflare Worker URL
+const SIGNAL_HTTP = "https://drop-signal.pookiepied.workers.dev";
+const SIGNAL_WS   = SIGNAL_HTTP.replace(/^https/, "wss").replace(/^http/, "ws");
+
+// Data channel chunk size (16 KiB default)
+const CHUNK_SIZE  = 16 * 1024;
+
+// Transfer reliability
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // ms
+
+// Get ICE config with TURN support
+let ICE_CONFIG = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
+
+// Fetch ICE configuration including TURN servers
+async function getIceConfig() {
+  try {
+    const response = await fetch(`${SIGNAL_HTTP}/turn-config`);
+    if (response.ok) {
+      const turnConfig = await response.json();
+      
+      // Response includes iceServers array
+      if (turnConfig.iceServers && turnConfig.iceServers.length > 0) {
+        // Add STUN and TURN servers from API response
+        return {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" }, // Always include STUN
+            ...turnConfig.iceServers // Include servers from API response
+          ]
+        };
+      }
+    }
+  } catch (error) {
+    console.warn("Could not fetch TURN configuration, using STUN only:", error);
+  }
+  
+  // Fallback to STUN only
+  return {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  };
+}
+
+/*
+ * PWA AND BROWSER DETECTION
+ */
+function isPWA() {
+  // Check if running as PWA (standalone mode)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+  console.log('PWA Detection - standalone mode:', isStandalone);
+  console.log('display-mode media query matches:', window.matchMedia('(display-mode: standalone)').matches);
+  console.log('navigator.standalone:', window.navigator.standalone);
+  return isStandalone;
+}
+
+function isSafari() {
+  // Check if user agent contains Safari but not Chrome (to distinguish from Chrome on iOS)
+  const ua = navigator.userAgent;
+  return ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('CriOS');
+}
+
+function isIOS() {
+  // Check if device is iOS
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function shouldShowQRScanner() {
+  // Show QR scanner button only in PWA mode
+  const result = isPWA();
+  console.log('shouldShowQRScanner result:', result);
+  
+  // For debugging - force show the button regardless of PWA status
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('debug') === 'true') {
+    console.log('Debug mode: forcing QR scanner button to show');
+    return true;
+  }
+  
+  return result;
+}
+
+function shouldShowAddToHomeScreenPrompt() {
+  // Show prompt for Safari users who are not in PWA mode
+  return isSafari() && !isPWA() && isIOS();
+}
+
+// PWA Installation handling
+let deferredPrompt = null;
+
+// Listen for the beforeinstallprompt event (only works in Chromium browsers)
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  console.log('PWA install prompt available (Chromium browsers only)');
+});
+
+// Function to trigger PWA installation (Chromium browsers only)
+async function triggerPWAInstall() {
+  console.log('Attempting PWA installation...');
+  
+  // For Chromium browsers that support beforeinstallprompt
+  if (deferredPrompt) {
+    try {
+      // Show the install prompt
+      deferredPrompt.prompt();
+      
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      // Clear the saved prompt since it can't be used again
+      deferredPrompt = null;
+      
+      console.log(`User response to PWA install prompt: ${outcome}`);
+      return outcome === 'accepted';
+    } catch (error) {
+      console.error('Error during PWA installation:', error);
+      return false;
+    }
+  } else {
+    // No installation support available
+    console.log('PWA installation not supported in this browser');
+    return false;
+  }
+}
+
+function showManualInstallInstructions() {
+  // Show manual installation instructions for iOS Safari
+  const instructions = `
+    To install this app:
+    1. Tap the Share button ${isIOS() ? 'at the bottom of your screen' : 'in your browser toolbar'}
+    2. Select "Add to Home Screen"
+    3. Tap "Add" to confirm
+  `;
+  
+  alert(instructions);
+}
+
+/*
+ * STATE
+ */
+
+let selectedFile          = null;
+let roomId                = null;
+let signalingWs           = null;
+let myPeerId              = null;
+let peerConn              = null;   // RTCPeerConnection
+let dataChannel           = null;   // RTCDataChannel (sender opens it)
+let remoteDescriptionSet  = false;  // Guard for ICE candidate buffering
+let pendingIceCandidates  = [];     // ICE candidates buffered before remoteDesc
+
+// Browser capability detection
+const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+// Receiver accumulation (fallback mode)
+let recvMeta      = null;   // { name, size, type }
+let recvChunks    = [];
+let recvReceived  = 0;
+let recvSequence  = 0;      // Current expected sequence number
+let recvChecksums = [];     // Store checksums for validation
+
+// Transfer speed tracking
+let sendLastBytes = 0;
+let sendLastTime  = Date.now();
+let recvLastBytes = 0;
+let recvLastTime  = Date.now();
+let sendSpeedInterval = null;
+let recvSpeedInterval = null;
+let sendEtaInterval = null;
+let recvEtaInterval = null;
+
+// Streaming receiver (Chromium mode)
+let writableStream = null;
+let streamFileHandle = null;
+let useStreaming = false;
+
+// Transfer state for resume capability
+let transferState = {
+  sender: {
+    sequence: 0,
+    sentChunks: new Set(),     // Track sent chunks
+    lastAck: 0,               // Last acknowledged sequence
+    isResuming: false
+  },
+  receiver: {
+    receivedChunks: new Set(), // Track received chunks
+    expectedSequence: 0,
+    isResuming: false
+  }
+};
+
+// Pause/resume state
+let transferPaused = false;  // Global pause state for sender/receiver
+let sendAbortController = null;
+let recvAbortController = null;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ELEMENT SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const $ = id => document.getElementById(id);
+
+const dropZone         = $("drop-zone");
+const fileInput        = $("file-input");
+const dropName         = $("drop-name");
+const shareBtn         = $("share-btn");
+const sendRoomInfo     = $("send-room-info");
+const roomIdDisplay    = $("room-id-display");
+const copyBtn          = $("copy-btn");
+const linkDisplay      = $("link-display");
+const copyLinkBtn      = $("copy-link-btn");
+// QR Code Elements
+const qrFloatingBox    = $("qr-floating-box");
+const qrRoomIdDisplay  = $("qr-room-id");
+const qrCanvas         = $("qr-canvas");
+const qrStatus         = $("qr-status");
+const closeQrBtn       = $("close-qr-btn");
+const sendDot          = $("send-dot");
+const sendStatusText   = $("send-status-text");
+const sendProgressWrap = $("send-progress-wrap");
+const sendProgressFill = $("send-progress-fill");
+const sendProgressPct  = $("send-progress-pct");
+const sendProgressLbl  = $("send-progress-label");
+const sendSpeedDisplay = $("send-speed-display");
+const sendEtaDisplay   = $("send-eta-display");
+const pauseSendBtn     = $("pause-send-btn");
+const resumeSendBtn    = $("resume-send-btn");
+
+const roomCodeInput    = $("room-code-input");
+const joinBtn          = $("join-btn");
+const receiveRoomInfo  = $("receive-room-info");
+const recvDot          = $("recv-dot");
+const recvStatusText   = $("recv-status-text");
+const fileList         = $("file-list");
+const recvProgressWrap = $("recv-progress-wrap");
+const recvProgressFill = $("recv-progress-fill");
+const recvProgressPct  = $("recv-progress-pct");
+const recvProgressLbl  = $("recv-progress-label");
+const recvSpeedDisplay = $("recv-speed-display");
+const recvEtaDisplay   = $("recv-eta-display");
+const pauseRecvBtn     = $("pause-recv-btn");
+const resumeRecvBtn    = $("resume-recv-btn");
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE SELECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0]) setSelectedFile(fileInput.files[0]);
+});
+
+dropZone.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  if (e.dataTransfer.files[0]) setSelectedFile(e.dataTransfer.files[0]);
+});
+
+function resetAnimations() {
+  // Reset room info animations
+  sendRoomInfo.classList.remove("room-info-enter", "room-info-enter-active");
+  const roomInfoChildren = sendRoomInfo.querySelectorAll('.animate-stagger');
+  roomInfoChildren.forEach(el => {
+    el.classList.remove('animate-stagger', 'active');
+  });
+  
+  // Reset QR box animations
+  qrFloatingBox.classList.remove("qr-box-enter", "qr-box-enter-active");
+  
+  // Reset join section animations
+  receiveSection.classList.remove("slide-down-enter", "slide-down-enter-active");
+}
+
+// Call reset when selecting new file
+function setSelectedFile(file) {
+  selectedFile = file;
+  dropName.textContent = `${file.name}  (${humanSize(file.size)})`;
+  dropName.style.display = "block";
+  shareBtn.disabled = false;
+  
+  // Hide QR box when selecting new file
+  qrFloatingBox.classList.add("hidden");
+  qrRoomIdDisplay.textContent = "—";
+  
+  // Reset animations
+  resetAnimations();
+  
+  // Stop any ongoing speed tracking
+  stopSendSpeedTracking();
+  stopRecvSpeedTracking();
+  
+  // Reset transfer state
+  resetTransferState();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SENDER: CREATE ROOM
+// ═══════════════════════════════════════════════════════════════════════════
+
+shareBtn.addEventListener("click", async () => {
+  shareBtn.disabled = true;
+  shareBtn.textContent = "Creating…";
+
+  try {
+    const res = await fetch(`${SIGNAL_HTTP}/room`, { method: "POST" });
+    const data = await res.json();
+    roomId = data.roomId;
+  } catch (err) {
+    alert("Could not reach signaling server. Is it deployed?");
+    shareBtn.disabled = false;
+    shareBtn.textContent = "Generate link";
+    qrFloatingBox.classList.add("hidden"); // Hide QR on error
+    return;
+  }
+
+  roomIdDisplay.textContent = roomId.toUpperCase();
+  
+  // Generate shareable link
+  const shareableLink = `${window.location.origin}?room=${roomId}`;
+  linkDisplay.textContent = shareableLink;
+  
+  // Add animation classes for room info reveal
+  sendRoomInfo.classList.remove("hidden");
+  sendRoomInfo.classList.add("room-info-enter");
+  
+  // Trigger reflow
+  void sendRoomInfo.offsetWidth;
+  
+  // Add active state for animation
+  sendRoomInfo.classList.add("room-info-enter-active");
+  
+  // Add staggered animation to child elements
+  const roomInfoChildren = sendRoomInfo.querySelectorAll('.divider, .id-display, .status');
+  roomInfoChildren.forEach((el, index) => {
+    el.classList.add('animate-stagger');
+    setTimeout(() => {
+      el.classList.add('active');
+    }, 100 + (index * 50));
+  });
+  
+  setSendStatus("Creating connection...", "yellow");
+  shareBtn.closest(".card").querySelector(".drop-zone").style.pointerEvents = "none";
+
+  // Automatically generate and show QR code with animation
+  await generateQRCode();
+
+  // Connect to signaling WS as sender
+  connectSignaling(roomId, "sender");
+});
+
+copyBtn.addEventListener("click", () => {
+  navigator.clipboard.writeText(roomId.toUpperCase()).then(() => {
+    copyBtn.textContent = "copied";
+    setTimeout(() => copyBtn.textContent = "copy", 1500);
+  });
+});
+
+copyLinkBtn.addEventListener("click", () => {
+  const shareableLink = `${window.location.origin}?room=${roomId}`;
+  navigator.clipboard.writeText(shareableLink).then(() => {
+    copyLinkBtn.textContent = "copied";
+    setTimeout(() => copyLinkBtn.textContent = "copy", 1500);
+  });
+});
+
+// Close QR box button
+document.addEventListener('DOMContentLoaded', () => {
+  const closeQrBtn = document.getElementById('close-qr-btn');
+  const qrFloatingBox = document.getElementById('qr-floating-box');
+  const qrRoomIdDisplay = document.getElementById('qr-room-id');
+  
+  if (closeQrBtn && qrFloatingBox && qrRoomIdDisplay) {
+    closeQrBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Close QR box button clicked');
+      qrFloatingBox.classList.add("hidden");
+      qrRoomIdDisplay.textContent = "—";
+    });
+    console.log('Floating QR box close button event listener added');
+  }
+});
+
+// Pause/Resume send buttons
+pauseSendBtn.addEventListener("click", () => {
+  transferPaused = true;
+  setSendStatus("Transfer paused", "yellow");
+  pauseSendBtn.disabled = true;
+  resumeSendBtn.disabled = false;
+  // Signal to receiver that we're paused
+  sendSignal({ type: "transfer-paused", from: myPeerId });
+});
+
+resumeSendBtn.addEventListener("click", () => {
+  transferPaused = false;
+  setSendStatus("Transfer resumed", "yellow");
+  pauseSendBtn.disabled = false;
+  resumeSendBtn.disabled = true;
+  // Signal to receiver that we're resumed
+  sendSignal({ type: "transfer-resumed", from: myPeerId });
+});
+
+// Pause/Resume receive buttons
+pauseRecvBtn.addEventListener("click", () => {
+  transferPaused = true;
+  setRecvStatus("Transfer paused", "yellow");
+  pauseRecvBtn.disabled = true;
+  resumeRecvBtn.disabled = false;
+  // Signal to sender that we're paused
+  sendSignal({ type: "transfer-paused", from: myPeerId });
+});
+
+resumeRecvBtn.addEventListener("click", () => {
+  transferPaused = false;
+  setRecvStatus("Transfer resumed", "yellow");
+  pauseRecvBtn.disabled = false;
+  resumeRecvBtn.disabled = true;
+  // Signal to sender that we're resumed
+  sendSignal({ type: "transfer-resumed", from: myPeerId });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RECEIVER: JOIN ROOM
+// ═══════════════════════════════════════════════════════════════════════════
+
+joinBtn.addEventListener("click", async () => {
+  const code = roomCodeInput.value.trim().toLowerCase();
+  if (!code) {
+    setRecvStatus("Please enter a room code.", "red");
+    return;
+  }
+  
+  // Hide QR box when joining as receiver
+  qrFloatingBox.classList.add("hidden");
+  
+  // Validate room code format (should be at least 3 characters)
+  if (code.length < 3) {
+    setRecvStatus("Invalid room code format.", "red");
+    return;
+  }
+  
+  joinBtn.disabled = true;
+  setRecvStatus("Connecting to room...", "yellow");
+  receiveRoomInfo.classList.remove("hidden");
+  
+  // Reset receiver state
+  recvMeta = null;
+  recvChunks = [];
+  recvReceived = 0;
+  writableStream = null;
+  streamFileHandle = null;
+  recvSequence = 0;
+  recvChecksums = [];
+  
+  // Stop any previous speed tracking
+  stopRecvSpeedTracking();
+  
+  // Reset transfer state
+  resetTransferState();
+  
+  // For Chromium browsers, ask user preference for streaming vs blob
+  // But for URL joins, we'll default to streaming mode to avoid popup blocking
+  if (supportsFileSystemAccess) {
+    // Check if this is a URL join (auto-join scenario)
+    const isUrlJoin = window.location.search.includes('room=');
+    
+    if (isUrlJoin) {
+      // For URL joins, automatically use streaming mode to avoid popup blocking
+      useStreaming = true;
+      setRecvStatus("Streaming mode enabled. File will be saved directly to disk.", "yellow");
+      // Small delay to ensure UI is ready
+      await sleep(50);
+    } else {
+      // For manual joins, ask user preference
+      const useStream = confirm("Use streaming mode to save directly to disk?\n(Click Cancel to use traditional mode)");
+      useStreaming = useStream;
+      if (useStream) {
+        setRecvStatus("Streaming mode enabled. A save dialog will appear when transfer begins.", "yellow");
+      } else {
+        setRecvStatus("Traditional mode enabled. File will be assembled in memory.", "yellow");
+      }
+    }
+  } else {
+    useStreaming = false;
+    setRecvStatus("Traditional mode enabled (browser doesn't support streaming).", "yellow");
+  }
+  
+  connectSignaling(code, "receiver");
+});
+
+// Allow enter key in input
+roomCodeInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") joinBtn.click();
+});
+
+// Convert input to uppercase
+roomCodeInput.addEventListener("input", e => {
+  e.target.value = e.target.value.toUpperCase();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIGNALING
+// ═══════════════════════════════════════════════════════════════════════════
+
+function connectSignaling(id, role) {
+  // Set up connection timeout
+  const connectionTimeout = setTimeout(() => {
+    if (signalingWs && signalingWs.readyState === WebSocket.CONNECTING) {
+      signalingWs.close();
+      if (role === "sender") {
+        setSendStatus("Connection timed out. Please try again.", "red");
+      } else {
+        setRecvStatus("Connection timed out. Please try again.", "red");
+      }
+    }
+  }, 10000); // 10 second timeout
+
+  // Create WebSocket and handle potential connection errors
+  try {
+    signalingWs = new WebSocket(`${SIGNAL_WS}/room/${id}/ws`);
+    
+    // Set up onerror handler for the WebSocket object itself
+    signalingWs.onerror = (error) => {
+      console.error("[signal] WebSocket connection error", error);
+    };
+  } catch (e) {
+    console.error("[signal] Failed to create WebSocket", e);
+    if (role === "sender") {
+      setSendStatus("Failed to create connection: Room may be full. Only 2 peers allowed.", "red");
+    } else {
+      setRecvStatus("Failed to join room: Room may be full. Only 2 peers allowed.", "red");
+    }
+    return;
+  }
+
+  signalingWs.addEventListener("open", () => {
+    console.log(`[signal] connected as ${role}`);
+    clearTimeout(connectionTimeout);
+  });
+
+  signalingWs.addEventListener("message", async e => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === "welcome") {
+      myPeerId = msg.peerId;
+      console.log(`[signal] I am ${myPeerId}, peerCount=${msg.peerCount}`);
+
+      // If I'm the sender and someone is already here, initiate
+      if (role === "sender" && msg.peerCount > 1) {
+        await initiateSenderHandshake();
+      }
+      return;
+    }
+
+    // A peer joined — if I'm the sender, kick off the handshake
+    if (msg.type === "peer-joined" && role === "sender") {
+      setSendStatus("Peer connected. Establishing channel…", "yellow");
+      await initiateSenderHandshake();
+      return;
+    }
+
+    if (msg.type === "peer-joined" && role === "receiver") {
+      setRecvStatus("Sender connected. Waiting for offer…", "yellow");
+      return;
+    }
+
+    if (msg.type === "peer-left") {
+      const txt = role === "sender" ? "Peer disconnected." : "Sender disconnected.";
+      if (role === "sender") setSendStatus(txt, "red");
+      else setRecvStatus(txt, "red");
+      return;
+    }
+
+    // WebRTC signaling messages
+    if (msg.type === "offer" && role === "receiver") {
+      await handleOffer(msg.sdp);
+      return;
+    }
+
+    if (msg.type === "answer" && role === "sender") {
+      await peerConn.setRemoteDescription({ type: "answer", sdp: msg.sdp });
+      remoteDescriptionSet = true;
+      for (const candidate of pendingIceCandidates) {
+        try { await peerConn.addIceCandidate(candidate); } catch {}
+      }
+      pendingIceCandidates = [];
+      return;
+    }
+
+    if (msg.type === "ice-candidate") {
+      if (msg.candidate) {
+        if (peerConn && remoteDescriptionSet) {
+          try { await peerConn.addIceCandidate(msg.candidate); } catch {}
+        } else {
+          // Buffer until setRemoteDescription has been called
+          pendingIceCandidates.push(msg.candidate);
+        }
+      }
+      return;
+    }
+    
+    // Handle pause/resume signals from the other peer
+    if (msg.type === "transfer-paused") {
+      transferPaused = true;
+      if (role === "sender") {
+        setSendStatus("Transfer paused by receiver", "yellow");
+        pauseSendBtn.disabled = true;
+        resumeSendBtn.disabled = false;
+      } else {
+        setRecvStatus("Transfer paused by sender", "yellow");
+        pauseRecvBtn.disabled = true;
+        resumeRecvBtn.disabled = false;
+      }
+      return;
+    }
+    
+    if (msg.type === "transfer-resumed") {
+      transferPaused = false;
+      if (role === "sender") {
+        setSendStatus("Transfer resumed by receiver", "yellow");
+        pauseSendBtn.disabled = false;
+        resumeSendBtn.disabled = true;
+      } else {
+        setRecvStatus("Transfer resumed by sender", "yellow");
+        pauseRecvBtn.disabled = false;
+        resumeRecvBtn.disabled = true;
+      }
+      return;
+    }
+  });
+
+  signalingWs.addEventListener("close", (event) => {
+    console.log("[signal] ws closed", event);
+    // Check if the connection was rejected due to room being full (status code 1008 is often used for application errors)
+    if (event.code === 1008 || (event.reason && event.reason.includes("full")) || (event.code === 1009)) {
+      if (role === "sender") {
+        setSendStatus("Failed to create connection: Room is full. Only 2 peers allowed.", "red");
+      } else {
+        setRecvStatus("Failed to join room: Room is full. Only 2 peers allowed.", "red");
+      }
+    } else {
+      if (role === "sender") {
+        setSendStatus("Connection closed unexpectedly.", "red");
+        qrFloatingBox.classList.add("hidden"); // Hide QR when connection closes
+      } else {
+        setRecvStatus("Connection closed unexpectedly.", "red");
+      }
+    }
+  });
+
+  signalingWs.addEventListener("error", (err) => {
+    console.error("[signal] error", err);
+    // Error event may fire before close event, so we'll update status in close event
+    // But we'll log the error here for debugging purposes
+  });
+}
+
+function sendSignal(obj) {
+  if (signalingWs && signalingWs.readyState === WebSocket.OPEN) {
+    signalingWs.send(JSON.stringify(obj));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SENDER — WebRTC handshake
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function initiateSenderHandshake() {
+  peerConn = await createPeerConnection("sender");
+  remoteDescriptionSet = false;
+  pendingIceCandidates = [];
+
+  // Open the data channel (sender always opens it)
+  dataChannel = peerConn.createDataChannel("file-transfer");
+  dataChannel.binaryType = "arraybuffer";
+
+  dataChannel.addEventListener("open", () => {
+    setSendStatus("Channel open. Sending file…", "green");
+    sendFile();
+  });
+
+  dataChannel.addEventListener("close", () => {
+    setSendStatus("Transfer complete.", "green");
+    stopSendSpeedTracking();
+  });
+  
+  dataChannel.addEventListener("error", () => {
+    stopSendSpeedTracking();
+  });
+
+  // Create and send the offer
+  const offer = await peerConn.createOffer();
+  await peerConn.setLocalDescription(offer);
+  sendSignal({ type: "offer", sdp: offer.sdp });
+}
+
+async function sendFile() {
+  if (!selectedFile || !dataChannel) return;
+
+  // Reset transfer state
+  transferState.sender.sequence = 0;
+  transferState.sender.sentChunks.clear();
+  transferState.sender.lastAck = 0;
+  transferState.sender.isResuming = false;
+
+  // Reset pause state
+  transferPaused = false;
+  sendAbortController = new AbortController();
+
+  // Enable pause button and disable resume button
+  pauseSendBtn.disabled = false;
+  resumeSendBtn.disabled = true;
+
+  // 1. Send metadata first as a JSON text message
+  const meta = {
+    __meta: true,
+    name:   selectedFile.name,
+    size:   selectedFile.size,
+    type:   selectedFile.type || "application/octet-stream",
+    chunks: Math.ceil(selectedFile.size / CHUNK_SIZE), // Total chunks
+    chunkSize: CHUNK_SIZE
+  };
+  dataChannel.send(JSON.stringify(meta));
+
+  // 2. Stream the file in sequenced chunks with checksums
+  const totalSize = selectedFile.size;
+  let offset = 0;
+  let sequence = 0;
+
+  sendProgressWrap.style.display = "block";
+  sendProgressLbl.textContent = `Sending ${selectedFile.name}`;
+  
+  // Start speed tracking
+  startSendSpeedTracking();
+
+  const reader = selectedFile.stream().getReader();
+
+  let buf = new Uint8Array(0);
+
+  async function pump() {
+    while (!sendAbortController.signal.aborted) {
+      // Check if paused
+      if (transferPaused) {
+        await waitForResume('send');
+        if (sendAbortController.signal.aborted) break;
+      }
+      
+      const { done, value } = await reader.read({ signal: sendAbortController.signal });
+
+      if (done || value === undefined) {
+        // Flush remaining bytes
+        if (buf.length > 0) {
+          const chunkData = createChunk(sequence, buf.buffer, true);
+          dataChannel.send(JSON.stringify(chunkData));
+          transferState.sender.sentChunks.add(sequence);
+          offset += buf.length;
+          updateSendProgress(offset, totalSize);
+          sequence++;
+        }
+        // Signal end-of-file
+        setSendStatus("File sent", "green");
+        sendProgressLbl.textContent = "Done";
+        stopSendSpeedTracking();
+        // Disable pause button after completion
+        pauseSendBtn.disabled = true;
+        break;
+      }
+
+      // Accumulate into buf, flush when we have enough
+      let combined = new Uint8Array(buf.length + value.length);
+      combined.set(buf);
+      combined.set(value, buf.length);
+      buf = combined;
+
+      while (buf.length >= CHUNK_SIZE) {
+        // Check if paused
+        if (transferPaused) {
+          await waitForResume('send');
+          if (sendAbortController.signal.aborted) break;
+        }
+        
+        // Simple backpressure: wait if buffer is filling up
+        while (dataChannel.bufferedAmount > 2 * 1024 * 1024 && !sendAbortController.signal.aborted) {
+          if (transferPaused) {
+            await waitForResume('send');
+            if (transferPaused) continue;
+          }
+          await sleep(10);
+        }
+        
+        if (sendAbortController.signal.aborted) break;
+
+        const chunkData = buf.slice(0, CHUNK_SIZE);
+        const chunkPacket = createChunk(sequence, chunkData.buffer);
+        dataChannel.send(JSON.stringify(chunkPacket));
+        transferState.sender.sentChunks.add(sequence);
+        
+        offset += CHUNK_SIZE;
+        updateSendProgress(offset, totalSize);
+        sequence++;
+        buf = buf.slice(CHUNK_SIZE);
+      }
+    }
+  }
+
+  await pump();
+  
+  // Clean up
+  try {
+    await reader.cancel();
+  } catch (e) {
+    // Reader might already be cancelled
+  }
+}
+
+// Helper function to wait for resume
+function waitForResume(type) {
+  return new Promise(resolve => {
+    const checkResume = () => {
+      if (!transferPaused) {
+        resolve();
+      } else {
+        setTimeout(checkResume, 100);
+      }
+    };
+    checkResume();
+  });
+}
+
+function updateSendProgress(received, total) {
+  const pct = Math.min(100, Math.round((received / total) * 100));
+  sendProgressFill.style.width = pct + "%";
+  sendProgressPct.textContent  = pct + "%";
+}
+
+function startSendSpeedTracking() {
+  if (sendSpeedInterval) clearInterval(sendSpeedInterval);
+  if (sendEtaInterval) clearInterval(sendEtaInterval);
+  sendLastBytes = 0;
+  sendLastTime = Date.now();
+  
+  sendSpeedInterval = setInterval(() => {
+    const now = Date.now();
+    const elapsed = (now - sendLastTime) / 1000; // seconds
+    if (elapsed > 0) {
+      // Use actual bytes sent instead of progress percentage
+      const currentBytes = parseInt(sendProgressPct.textContent) * selectedFile.size / 100;
+      const speed = (currentBytes - sendLastBytes) / elapsed;
+      
+      // Only update if we have meaningful speed data
+      if (speed > 0 && !isNaN(speed)) {
+        sendSpeedDisplay.textContent = formatSpeed(speed);
+        sendLastBytes = currentBytes;
+        sendLastTime = now;
+        
+        // Update ETA
+        updateSendETA(speed);
+      }
+    }
+  }, 1000);
+}
+
+function stopSendSpeedTracking() {
+  if (sendSpeedInterval) {
+    clearInterval(sendSpeedInterval);
+    sendSpeedInterval = null;
+  }
+  if (sendEtaInterval) {
+    clearInterval(sendEtaInterval);
+    sendEtaInterval = null;
+  }
+  sendSpeedDisplay.textContent = "—";
+  sendEtaDisplay.textContent = "—";
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RECEIVER — WebRTC handshake
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleOffer(sdp) {
+  peerConn = await createPeerConnection("receiver");
+  remoteDescriptionSet = false;
+  pendingIceCandidates = [];
+
+  // Receiver listens for data channel opened by sender
+  peerConn.addEventListener("datachannel", e => {
+    const dc = e.channel;
+    dc.binaryType = "arraybuffer";
+
+    dc.addEventListener("open", () => {
+      setRecvStatus("Channel open. Receiving…", "green");
+    });
+
+    dc.addEventListener("message", e => {
+      handleIncomingData(e.data);
+    });
+
+    dc.addEventListener("close", () => {
+      setRecvStatus("Transfer complete.", "green");
+      stopRecvSpeedTracking();
+    });
+    
+    dc.addEventListener("error", () => {
+      stopRecvSpeedTracking();
+    });
+  });
+
+  await peerConn.setRemoteDescription({ type: "offer", sdp });
+  remoteDescriptionSet = true;
+  // Flush any ICE candidates that arrived before the offer
+  for (const candidate of pendingIceCandidates) {
+    try { await peerConn.addIceCandidate(candidate); } catch {}
+  }
+  pendingIceCandidates = [];
+  const answer = await peerConn.createAnswer();
+  await peerConn.setLocalDescription(answer);
+  sendSignal({ type: "answer", sdp: answer.sdp });
+}
+
+async function handleIncomingData(data) {
+  // First, try to parse as JSON (chunk packets or metadata)
+  if (typeof data === "string") {
+    let msg;
+    try {
+      msg = JSON.parse(data);
+    } catch (e) {
+      console.warn("Invalid JSON received:", data);
+      return;
+    }
+
+    // Handle metadata
+    if (msg.__meta) {
+      recvMeta = msg;
+      recvChunks = [];
+      recvReceived = 0;
+      recvSequence = 0;
+      recvChecksums = [];
+      transferState.receiver.receivedChunks.clear();
+      transferState.receiver.expectedSequence = 0;
+      transferState.receiver.isResuming = false;
+
+      recvProgressWrap.style.display = "block";
+      recvProgressLbl.textContent = `Receiving ${msg.name}`;
+      
+      // Start speed tracking
+      startRecvSpeedTracking();
+      
+      setRecvStatus("Receiving file data...", "green");
+      return;
+    }
+
+    // Handle chunk data packets
+    if (typeof msg.sequence === 'number' && msg.data) {
+      // Convert base64 data back to ArrayBuffer
+      const byteString = atob(msg.data);
+      const buffer = new ArrayBuffer(byteString.length);
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < byteString.length; i++) {
+        bytes[i] = byteString.charCodeAt(i);
+      }
+      msg.data = buffer;
+      
+      // Validate chunk
+      if (!validateChunk(msg)) {
+        console.error(`Chunk ${msg.sequence} failed checksum validation`);
+        return;
+      }
+      
+      // Check sequence order
+      if (msg.sequence !== recvSequence) {
+        console.warn(`Out of order chunk: expected ${recvSequence}, got ${msg.sequence}`);
+        return;
+      }
+      
+      // Check if paused before storing chunk
+      if (transferPaused) {
+        await waitForResume('recv');
+      }
+      
+      // Store chunk
+      recvChunks.push(msg.data);
+      recvReceived += msg.data.byteLength;
+      transferState.receiver.receivedChunks.add(msg.sequence);
+      recvSequence++;
+      
+      if (recvMeta) {
+        updateRecvProgress(recvReceived, recvMeta.size);
+      }
+      
+      // Handle final chunk
+      if (msg.isFinal) {
+        stopRecvSpeedTracking();
+        assembleAndDownload();
+      }
+      return;
+    }
+    
+    // Handle EOF signal
+    if (msg.__eof) {
+      stopRecvSpeedTracking();
+      if (recvMeta) {
+        assembleAndDownload();
+      }
+      return;
+    }
+    
+    return;
+  }
+
+  // Handle raw binary data (legacy/backup method)
+  if (data instanceof ArrayBuffer) {
+    // Check if paused before storing chunk
+    if (transferPaused) {
+      await waitForResume('recv');
+      // Restart speed tracking after resume
+      if (recvMeta) {
+        startRecvSpeedTracking();
+      }
+    }
+    
+    recvChunks.push(data);
+    recvReceived += data.byteLength;
+
+    if (recvMeta) {
+      updateRecvProgress(recvReceived, recvMeta.size);
+    }
+    
+    // If we have received the expected amount of data, assemble file
+    if (recvMeta && recvReceived >= recvMeta.size) {
+      stopRecvSpeedTracking();
+      assembleAndDownload();
+    }
+  }
+}
+
+// Streaming receiver for Chromium browsers
+async function handleIncomingDataStreaming(data) {
+  // Text frames carry metadata / eof signals
+  if (typeof data === "string") {
+    const msg = JSON.parse(data);
+
+    if (msg.__meta) {
+      recvMeta = msg;
+      recvReceived = 0;
+      
+      recvProgressWrap.style.display = "block";
+      recvProgressLbl.textContent = `Receiving ${msg.name}`;
+      
+      // Start speed tracking
+      startRecvSpeedTracking();
+      
+      // Show save dialog immediately for streaming mode
+      try {
+        streamFileHandle = await window.showSaveFilePicker({
+          suggestedName: msg.name,
+          types: [{
+            description: 'Received file',
+            accept: { [msg.type]: ['*'] }
+          }]
+        });
+        writableStream = await streamFileHandle.createWritable();
+        setRecvStatus("Save location selected. Receiving file...", "green");
+      } catch (err) {
+        console.error("Failed to create writable stream:", err);
+        // Check if this is a user cancellation (not an error)
+        if (err.name === 'AbortError') {
+          setRecvStatus("Transfer cancelled by user.", "red");
+          return;
+        }
+        setRecvStatus("Failed to create file. Switching to traditional mode.", "red");
+        useStreaming = false;
+        // Fall back to blob mode
+        recvChunks = [];
+        return;
+      }
+      return;
+    }
+
+    if (msg.__eof && recvMeta) {
+      stopRecvSpeedTracking();
+      
+      if (writableStream) {
+        await writableStream.close();
+        writableStream = null;
+      }
+      
+      // Show completion in file list
+      const item = document.createElement("div");
+      item.className = "file-item";
+      item.innerHTML = `
+        <span class="file-item-name">${escHtml(recvMeta.name)}</span>
+        <span class="file-item-size">${humanSize(recvMeta.size)}</span>
+        <button class="btn btn-primary" onclick="openFileStream('${escHtml(recvMeta.name)}')">Open</button>
+      `;
+      fileList.appendChild(item);
+      
+      recvProgressLbl.textContent = "Done";
+      setRecvStatus("File saved to disk", "green");
+      
+      // Reset for next file
+      recvMeta = null;
+      recvReceived = 0;
+      return;
+    }
+    return;
+  }
+
+  // Binary frames are file chunks - write directly to disk
+  if (writableStream && data instanceof ArrayBuffer) {
+    // Check if paused before writing
+    if (transferPaused) {
+      await waitForResume('recv');
+    }
+    
+    await writableStream.write(data);
+    recvReceived += data.byteLength;
+    
+    if (recvMeta) {
+      updateRecvProgress(recvReceived, recvMeta.size);
+    }
+  } else if (!useStreaming && data instanceof ArrayBuffer) {
+    // Fallback mode - accumulate chunks
+    // Check if paused before storing chunk
+    if (transferPaused) {
+      await waitForResume('recv');
+    }
+    
+    recvChunks.push(data);
+    recvReceived += data.byteLength;
+    if (recvMeta) {
+      updateRecvProgress(recvReceived, recvMeta.size);
+    }
+    
+    // If we have received the expected amount of data, assemble file
+    if (recvMeta && recvReceived >= recvMeta.size) {
+      stopRecvSpeedTracking();
+      assembleAndDownload();
+    }
+  }
+}
+
+function assembleAndDownload() {
+  const blob = new Blob(recvChunks, { type: recvMeta.type });
+  const url  = URL.createObjectURL(blob);
+
+  // Show as a downloadable item in the list
+  const item = document.createElement("div");
+  item.className = "file-item";
+  item.innerHTML = `
+    <span class="file-item-name">${escHtml(recvMeta.name)}</span>
+    <span class="file-item-size">${humanSize(recvMeta.size)}</span>
+    <a class="btn btn-primary" href="${url}" download="${escHtml(recvMeta.name)}">Save</a>
+  `;
+  fileList.appendChild(item);
+
+  recvProgressLbl.textContent = "Done";
+  setRecvStatus("File ready", "green");
+
+  // Reset for next file
+  recvMeta     = null;
+  recvChunks   = [];
+  recvReceived = 0;
+}
+
+// Helper function to open streamed files
+function openFileStream(filename) {
+  // For streamed files, we can't create object URLs, but we can
+  // show the file in the file system if the browser supports it
+  if (streamFileHandle && streamFileHandle.getFile) {
+    streamFileHandle.getFile().then(file => {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  } else {
+    alert("File saved to your selected location.");
+  }
+}
+
+function updateRecvProgress(received, total) {
+  const pct = Math.min(100, Math.round((received / total) * 100));
+  recvProgressFill.style.width = pct + "%";
+  recvProgressPct.textContent  = pct + "%";
+}
+
+function startRecvSpeedTracking() {
+  if (recvSpeedInterval) clearInterval(recvSpeedInterval);
+  if (recvEtaInterval) clearInterval(recvEtaInterval);
+  recvLastBytes = 0;
+  recvLastTime = Date.now();
+  
+  recvSpeedInterval = setInterval(() => {
+    const now = Date.now();
+    const elapsed = (now - recvLastTime) / 1000; // seconds
+    if (elapsed > 0) {
+      const speed = (recvReceived - recvLastBytes) / elapsed;
+      // Only update if we have meaningful speed data
+      if (speed > 0 && !isNaN(speed) && isFinite(speed)) {
+        recvSpeedDisplay.textContent = formatSpeed(speed);
+        recvLastBytes = recvReceived;
+        recvLastTime = now;
+        
+        // Update ETA
+        updateRecvETA(speed);
+      }
+    }
+  }, 1000);
+}
+
+function stopRecvSpeedTracking() {
+  if (recvSpeedInterval) {
+    clearInterval(recvSpeedInterval);
+    recvSpeedInterval = null;
+  }
+  if (recvEtaInterval) {
+    clearInterval(recvEtaInterval);
+    recvEtaInterval = null;
+  }
+  recvSpeedDisplay.textContent = "—";
+  recvEtaDisplay.textContent = "—";
+}
+
+function formatSpeed(bytesPerSecond) {
+  if (bytesPerSecond < 1024) return bytesPerSecond.toFixed(0) + " B/s";
+  if (bytesPerSecond < 1024 * 1024) return (bytesPerSecond / 1024).toFixed(1) + " KB/s";
+  return (bytesPerSecond / (1024 * 1024)).toFixed(1) + " MB/s";
+}
+
+function formatTime(seconds) {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${minutes}m ${secs}s`;
+}
+
+function updateSendETA(currentSpeed) {
+  if (currentSpeed > 0 && selectedFile) {
+    const remainingBytes = selectedFile.size - (selectedFile.size * (parseInt(sendProgressPct.textContent) / 100));
+    const etaSeconds = remainingBytes / currentSpeed;
+    sendEtaDisplay.textContent = `ETA: ${formatTime(etaSeconds)}`;
+  } else {
+    sendEtaDisplay.textContent = "—";
+  }
+}
+
+function updateRecvETA(currentSpeed) {
+  if (currentSpeed > 0 && recvMeta) {
+    const remainingBytes = recvMeta.size - recvReceived;
+    const etaSeconds = remainingBytes / currentSpeed;
+    recvEtaDisplay.textContent = `ETA: ${formatTime(etaSeconds)}`;
+  } else {
+    recvEtaDisplay.textContent = "—";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRANSFER STATE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function resetTransferState() {
+  transferState.sender.sequence = 0;
+  transferState.sender.sentChunks.clear();
+  transferState.sender.lastAck = 0;
+  transferState.sender.isResuming = false;
+  
+  transferState.receiver.receivedChunks.clear();
+  transferState.receiver.expectedSequence = 0;
+  transferState.receiver.isResuming = false;
+}
+
+function getTransferProgress() {
+  if (transferState.sender.sentChunks.size > 0 && selectedFile) {
+    const totalChunks = Math.ceil(selectedFile.size / CHUNK_SIZE);
+    return {
+      sent: transferState.sender.sentChunks.size,
+      total: totalChunks,
+      percentage: Math.round((transferState.sender.sentChunks.size / totalChunks) * 100)
+    };
+  }
+  return null;
+}
+
+function canResumeTransfer() {
+  // Check if we have partial transfer data
+  return transferState.sender.sentChunks.size > 0 || 
+         transferState.receiver.receivedChunks.size > 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHARED — RTCPeerConnection factory
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function createPeerConnection(role) {
+  // Use dynamic ICE configuration that may include TURN servers
+  const iceConfig = await getIceConfig();
+  const pc = new RTCPeerConnection(iceConfig);
+
+  pc.addEventListener("icecandidate", e => {
+    if (e.candidate) {
+      sendSignal({ type: "ice-candidate", candidate: e.candidate.toJSON() });
+    }
+  });
+
+  pc.addEventListener("connectionstatechange", () => {
+    console.log(`[webrtc][${role}] connectionState = ${pc.connectionState}`);
+    if (pc.connectionState === "connected") {
+      if (role === "sender") setSendStatus("Peer connected", "green");
+      if (role === "receiver") setRecvStatus("Connected to sender", "green");
+      
+      // Show peer connected notification
+      showPeerConnectedNotification(role);
+      
+      // Disable QR scanner when connected to a room
+      disableQRScanner();
+      window.isConnected = true;
+    }
+    if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+      // Re-enable QR scanner when disconnected
+      if (pc.connectionState === "disconnected") {
+        enableQRScanner();
+        window.isConnected = false;
+      }
+      
+      // Show transfer failed notification for failed connections
+      if (pc.connectionState === "failed") {
+        showTransferFailedNotification("Connection failed");
+      }
+      
+      if (role === "sender") {
+        setSendStatus("Connection lost. You can attempt to resume if some data was transferred.", "red");
+        // Enable resume button if some data was transferred
+        if (transferState.sender.sentChunks.size > 0) {
+          resumeSendBtn.disabled = false;
+        }
+      }
+      if (role === "receiver") {
+        setRecvStatus("Connection lost. You can attempt to resume if some data was received.", "red");
+        // Enable resume button if some data was received
+        if (transferState.receiver.receivedChunks.size > 0) {
+          resumeRecvBtn.disabled = false;
+        }
+      }
+    }
+    if (pc.connectionState === "closed") {
+      // Transfer completed successfully
+      if (role === "sender") {
+        setSendStatus("Transfer complete", "green");
+        pauseSendBtn.disabled = true;
+        resumeSendBtn.disabled = true;
+        // Show transfer complete notification
+        if (selectedFile) {
+          showTransferCompleteNotification(selectedFile.name);
+        }
+      }
+      if (role === "receiver") {
+        setRecvStatus("Transfer complete", "green");
+        pauseRecvBtn.disabled = true;
+        resumeRecvBtn.disabled = true;
+        // Show transfer complete notification
+        if (recvMeta) {
+          showTransferCompleteNotification(recvMeta.name);
+        }
+      }
+    }
+  });
+
+  return pc;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CRC32 CHECKSUM IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Precomputed CRC32 table
+const CRC32_TABLE = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let j = 0; j < 8; j++) {
+    c = (c & 1) ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+  }
+  CRC32_TABLE[i] = c;
+}
+
+function crc32(data) {
+  let crc = 0xFFFFFFFF;
+  const view = new Uint8Array(data);
+  for (let i = 0; i < view.length; i++) {
+    crc = CRC32_TABLE[(crc ^ view[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHUNK MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function createChunk(sequence, data, isFinal = false) {
+  const checksum = crc32(data);
+  // Convert ArrayBuffer to base64 for JSON transmission
+  const bytes = new Uint8Array(data);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64Data = btoa(binary);
+  
+  return {
+    sequence: sequence,
+    data: base64Data,
+    checksum: checksum,
+    isFinal: isFinal
+  };
+}
+
+function validateChunk(chunk) {
+  if (!chunk || typeof chunk.sequence !== 'number') return false;
+  if (!(chunk.data instanceof ArrayBuffer)) return false;
+  
+  const calculatedChecksum = crc32(chunk.data);
+  return calculatedChecksum === chunk.checksum;
+}
+
+/*
+ * UI HELPERS
+ */
+
+function setSendStatus(txt, color = "yellow") {
+  sendStatusText.textContent = txt;
+  sendDot.className = `dot ${color}${color === "yellow" ? " pulse" : ""}`;
+}
+
+function setRecvStatus(txt, color = "yellow") {
+  recvStatusText.textContent = txt;
+  recvDot.className = `dot ${color}${color === "yellow" ? " pulse" : ""}`;
+}
+
+function humanSize(bytes) {
+  if (bytes < 1024)        return bytes + " B";
+  if (bytes < 1024 ** 2)   return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 ** 3)   return (bytes / 1024 ** 2).toFixed(1) + " MB";
+  return (bytes / 1024 ** 3).toFixed(2) + " GB";
+}
+
+function escHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function sleep(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESUME FUNCTIONALITY
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function resumeTransfer() {
+  if (!canResumeTransfer()) {
+    console.warn("No transfer state to resume");
+    return false;
+  }
+  
+  // For sender: resend unacknowledged chunks
+  if (transferState.sender.sentChunks.size > 0 && selectedFile) {
+    transferState.sender.isResuming = true;
+    setSendStatus("Attempting to resume transfer...", "yellow");
+        
+    // If we're the sender and the connection dropped, we need to restart the handshake
+    if (dataChannel && dataChannel.readyState === "open") {
+      // Connection is still open, just resume the sending process
+      await sendFile();
+    } else {
+      // Need to establish a new connection
+      // This would require coordination with the receiver
+      console.log("Need to establish new connection to resume transfer");
+      // For now, show message to user to restart the transfer
+      setSendStatus("Connection lost. Please restart transfer.", "red");
+      return false;
+    }
+    return true;
+  }
+      
+  // For receiver: request missing chunks
+  if (transferState.receiver.receivedChunks.size > 0 && recvMeta) {
+    transferState.receiver.isResuming = true;
+    setRecvStatus("Attempting to resume transfer...", "yellow");
+        
+    // If connection is still open, just wait for more data
+    if (dataChannel && dataChannel.readyState === "open") {
+      // Ready to receive more data
+      return true;
+    } else {
+      // Need to establish a new connection
+      setRecvStatus("Connection lost. Please restart transfer.", "red");
+      return false;
+    }
+  }
+  
+  return false;
+}
+
+/*
+ * QR CODE GENERATION (Using QRious Library)
+ */
+
+// Load QRious library
+let QRious;
+
+async function loadQRious() {
+  if (QRious) return QRious;
+  
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js';
+    script.onload = () => {
+      QRious = window.QRious;
+      resolve(QRious);
+    };
+    script.onerror = () => {
+      // Fallback to jsDelivr if CDN fails
+      const fallbackScript = document.createElement('script');
+      fallbackScript.src = 'https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js';
+      fallbackScript.onload = () => {
+        QRious = window.QRious;
+        resolve(QRious);
+      };
+      fallbackScript.onerror = reject;
+      document.head.appendChild(fallbackScript);
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function generateQRCode() {
+  if (!roomId) {
+    console.error("Cannot generate QR code: roomId is not set");
+    qrStatus.textContent = "Error: No room ID";
+    return;
+  }
+  
+  const shareableLink = `${window.location.origin}?room=${roomId}`;
+  qrStatus.textContent = "Generating QR code...";
+  
+  try {
+    // Load QRious library if not already loaded
+    await loadQRious();
+    
+    // Display room ID
+    qrRoomIdDisplay.textContent = roomId.toUpperCase();
+    
+    // Generate QR code using QRious
+    new QRious({
+      element: qrCanvas,
+      value: shareableLink,
+      size: 120,
+      level: 'M', // Medium error correction
+      foreground: '#e8e8ee', // Light modules
+      background: '#0c0c0e'  // Dark background
+    });
+    
+    // Add crisp rendering
+    qrCanvas.classList.add('qrious-canvas');
+    
+    // Show QR box with animation
+    qrFloatingBox.classList.remove("hidden");
+    qrFloatingBox.classList.add("qr-box-enter");
+    
+    // Trigger reflow
+    void qrFloatingBox.offsetWidth;
+    
+    // Add active state for animation
+    qrFloatingBox.classList.add("qr-box-enter-active");
+    
+    qrStatus.textContent = "Scan to join room";
+    
+  } catch (err) {
+    console.error("Failed to generate QR code:", err);
+    qrStatus.textContent = "Failed to generate QR";
+    qrRoomIdDisplay.textContent = "—";
+  }
+}
+
+/*
+ * QR SCANNER UI INITIALIZATION
+ */
+function initializeQRScannerUI() {
+  console.log('Initializing QR Scanner UI');
+  const qrScannerContainer = document.getElementById('qr-scanner-container');
+  const scanQRBtn = document.getElementById('scan-qr-btn');
+  
+  console.log('Elements found:', {
+    qrScannerContainer: !!qrScannerContainer,
+    scanQRBtn: !!scanQRBtn
+  });
+  
+  // Check if elements exist (defensive programming)
+  if (!qrScannerContainer || !scanQRBtn) {
+    console.warn('QR scanner UI elements not found');
+    return;
+  }
+  
+  // Show QR scanner button only in PWA mode
+  if (isPWA()) {
+    console.log('Running in PWA mode, showing QR scanner button');
+    qrScannerContainer.classList.remove('hidden');
+  } else {
+    console.log('Not in PWA mode, hiding QR scanner button');
+    qrScannerContainer.classList.add('hidden');
+  }
+  
+  // Add comprehensive debugging for QR scanner button
+  if (scanQRBtn) {
+    console.log('QR scanner button found, adding event listener');
+    scanQRBtn.addEventListener('click', handleQRScanClick);
+  } else {
+    console.error('QR scanner button not found in DOM');
+  }
+}
+
+// Handle QR scan button click - show inline scanner
+function handleQRScanClick(event) {
+  console.log('QR Scan button clicked!', {
+    event: event,
+    timestamp: new Date().toISOString(),
+    isPWA: isPWA(),
+    userAgent: navigator.userAgent
+  });
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  // Show the QR scanner section with animation
+  showQRScanner();
+}
+
+// Show QR scanner section with animation
+function showQRScanner() {
+  const qrSection = document.getElementById('qr-scanner-section');
+  const scanQRBtn = document.getElementById('scan-qr-btn');
+  const closeScannerBtn = document.getElementById('close-scanner-btn');
+  const video = document.getElementById('qr-video');
+  const statusText = document.getElementById('qr-status-text');
+  
+  if (!qrSection || !closeScannerBtn) {
+    console.error('QR scanner elements not found');
+    return;
+  }
+  
+  console.log('Showing QR scanner section');
+  
+  // Disable the scan button during scanning
+  if (scanQRBtn) {
+    scanQRBtn.disabled = true;
+    scanQRBtn.textContent = 'Scanner Open';
+  }
+  
+  // Prevent body scrolling when scanner is active
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  
+  // Show the section with animation
+  qrSection.classList.remove('hidden');
+  void qrSection.offsetWidth; // Trigger reflow
+  qrSection.classList.add('active');
+  
+  // Add close button event listener
+  closeScannerBtn.addEventListener('click', hideQRScanner);
+  
+  // Start camera and scanning
+  startQRScanning();
+}
+
+// Hide QR scanner section with animation
+function hideQRScanner() {
+  const qrSection = document.getElementById('qr-scanner-section');
+  const scanQRBtn = document.getElementById('scan-qr-btn');
+  
+  if (!qrSection) return;
+  
+  console.log('Hiding QR scanner section');
+  
+  // Restore body scrolling
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  
+  // Remove active class for exit animation
+  qrSection.classList.remove('active');
+  
+  // Hide after animation completes
+  setTimeout(() => {
+    qrSection.classList.add('hidden');
+    
+    // Re-enable scan button
+    if (scanQRBtn) {
+      scanQRBtn.disabled = false;
+      scanQRBtn.textContent = 'Scan QR Code';
+    }
+    
+    // Stop camera
+    stopQRScanning();
+  }, 300);
+}
+
+/*
+ * PWA NAVIGATION AND REFRESH FUNCTIONALITY
+ */
+function initializePWANavigation() {
+  console.log('Initializing PWA Navigation');
+  
+  // Home link functionality
+  const homeLink = document.getElementById('home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateToHome();
+    });
+    console.log('Home link event listener added');
+  }
+  
+  // Also handle Enter key for accessibility
+  if (homeLink) {
+    homeLink.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigateToHome();
+      }
+    });
+  }
+  
+  // Floating refresh button for PWA
+  if (isPWA()) {
+    createFloatingRefreshButton();
+  }
+  
+  // External link handling for PWA
+  if (isPWA()) {
+    handleExternalLinks();
+  }
+}
+
+function createFloatingRefreshButton() {
+  // Do nothing - refresh button removed as requested
+  console.log('Floating refresh button functionality disabled');
+}
+
+function handleExternalLinks() {
+  // Intercept all external links and open in system browser
+  document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[href]');
+    if (link) {
+      const href = link.getAttribute('href');
+      const isExternal = href && (href.startsWith('http') || href.startsWith('https')) && 
+                        !href.includes(window.location.hostname);
+      
+      if (isExternal) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Open in system browser
+        if (typeof window.open === 'function') {
+          window.open(href, '_blank');
+        }
+        
+        console.log('External link intercepted:', href);
+      }
+    }
+  });
+}
+
+/*
+ * NOTIFICATION SYSTEM
+ */
+function initializeNotifications() {
+  console.log('Initializing notification system');
+  
+  // Check if notifications are supported
+  if (!('Notification' in window)) {
+    console.log('Notifications not supported in this browser');
+    return;
+  }
+  
+  // Request notification permission
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      console.log('Notification permission:', permission);
+    });
+  }
+  
+  // Check if we're in PWA mode and set up service worker messaging
+  if (isPWA() && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      console.log('Service worker ready for notifications');
+    });
+  }
+}
+
+function showTransferCompleteNotification(filename) {
+  if (Notification.permission !== 'granted') {
+    console.log('Notification permission not granted');
+    return;
+  }
+  
+  const notificationOptions = {
+    body: `File "${filename}" has been successfully transferred`,
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    tag: 'transfer-complete',
+    renotify: true,
+    requireInteraction: false
+  };
+  
+  // Try service worker notification first (for PWA)
+  if (isPWA() && navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title: 'Transfer Complete',
+      options: notificationOptions
+    });
+  } else {
+    // Fallback to regular notification API
+    try {
+      const notification = new Notification('Transfer Complete', notificationOptions);
+      
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        if (notification) notification.close();
+      }, 5000);
+      
+      // Handle click to focus window
+      notification.addEventListener('click', () => {
+        window.focus();
+        notification.close();
+      });
+    } catch (error) {
+      console.error('Failed to show notification:', error);
+    }
+  }
+}
+
+function showPeerConnectedNotification(peerType) {
+  if (Notification.permission !== 'granted') {
+    console.log('Notification permission not granted');
+    return;
+  }
+  
+  const notificationOptions = {
+    body: `${peerType === 'sender' ? 'Someone joined your drop' : 'Connected to sender'}`,
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    tag: 'peer-connected',
+    renotify: true,
+    requireInteraction: false
+  };
+  
+  // Try service worker notification first (for PWA)
+  if (isPWA() && navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title: 'Peer Connected',
+      options: notificationOptions
+    });
+  } else {
+    // Fallback to regular notification API
+    try {
+      const notification = new Notification('Peer Connected', notificationOptions);
+      
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        if (notification) notification.close();
+      }, 5000);
+      
+      // Handle click to focus window
+      notification.addEventListener('click', () => {
+        window.focus();
+        notification.close();
+      });
+    } catch (error) {
+      console.error('Failed to show notification:', error);
+    }
+  }
+}
+
+function showTransferFailedNotification(reason) {
+  if (Notification.permission !== 'granted') {
+    console.log('Notification permission not granted');
+    return;
+  }
+  
+  const notificationOptions = {
+    body: reason || 'Transfer failed',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    tag: 'transfer-failed',
+    renotify: true,
+    requireInteraction: false
+  };
+  
+  // Try service worker notification first (for PWA)
+  if (isPWA() && navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title: 'Transfer Failed',
+      options: notificationOptions
+    });
+  } else {
+    // Fallback to regular notification API
+    try {
+      const notification = new Notification('Transfer Failed', notificationOptions);
+      
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        if (notification) notification.close();
+      }, 5000);
+      
+      // Handle click to focus window
+      notification.addEventListener('click', () => {
+        window.focus();
+        notification.close();
+      });
+    } catch (error) {
+      console.error('Failed to show notification:', error);
+    }
+  }
+}
+
+function showTransferFailedNotification(error) {
+  if (Notification.permission !== 'granted') return;
+  
+  const notification = new Notification('Transfer Failed', {
+    body: `Transfer failed: ${error}`,
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    tag: 'transfer-failed'
+  });
+  
+  // Auto-close after 7 seconds
+  setTimeout(() => notification.close(), 7000);
+  
+  notification.addEventListener('click', () => {
+    window.focus();
+    notification.close();
+  });
+}
+
+function navigateToHome() {
+  console.log('Navigating to home');
+  
+  try {
+    // Reset all states
+    resetAllStates();
+    
+    // Hide all sections except landing
+    document.querySelectorAll('.section:not(#landing)').forEach(section => {
+      section.classList.add('hidden');
+    });
+    
+    // Show landing section
+    const landingSection = document.getElementById('landing');
+    if (landingSection) {
+      landingSection.classList.remove('hidden');
+    }
+    
+    // Reset UI elements
+    const roomCodeInput = document.getElementById('room-code-input');
+    const createBtn = document.getElementById('create-btn');
+    const joinBtn = document.getElementById('join-btn');
+    
+    if (roomCodeInput) roomCodeInput.value = '';
+    if (createBtn) createBtn.disabled = false;
+    if (joinBtn) joinBtn.disabled = false;
+    
+    // Hide QR scanner if active
+    const qrSection = document.getElementById('qr-scanner-section');
+    if (qrSection && !qrSection.classList.contains('hidden')) {
+      hideQRScanner();
+    }
+    
+    // Reset connection states
+    if (window.drop && typeof window.drop.reset === 'function') {
+      window.drop.reset();
+    }
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+    
+    console.log('Navigation to home completed');
+  } catch (error) {
+    console.error('Error during navigation:', error);
+  }
+}
+
+function resetAllStates() {
+  // Reset global state flags
+  window.isCreating = false;
+  window.isJoining = false;
+  window.isConnected = false;
+  
+  // Reset UI states
+  updateCreateButton(false);
+  updateJoinButton(false);
+  
+  // Clear any active timers or intervals
+  if (window.connectionTimer) {
+    clearTimeout(window.connectionTimer);
+    window.connectionTimer = null;
+  }
+  
+  // Reset room-related UI
+  const roomCodeDisplay = document.getElementById('room-code-display');
+  const roomUrlDisplay = document.getElementById('room-url-display');
+  const qrCodeContainer = document.getElementById('qr-code-container');
+  
+  if (roomCodeDisplay) roomCodeDisplay.textContent = '';
+  if (roomUrlDisplay) roomUrlDisplay.textContent = '';
+  if (qrCodeContainer) qrCodeContainer.innerHTML = '';
+  
+  // Re-enable QR scanner
+  enableQRScanner();
+  
+  console.log('All states reset');
+}
+
+
+
+// QR Scanning Logic
+let qrStream = null;
+let qrScanning = false;
+let qrAnimationFrame = null;
+let scanTimeout = null;
+
+// QR Scanner availability control
+function disableQRScanner() {
+  const scanQRBtn = document.getElementById('scan-qr-btn');
+  const qrScannerContainer = document.getElementById('qr-scanner-container');
+  if (scanQRBtn && qrScannerContainer) {
+    // Hide the entire container during file transfer
+    qrScannerContainer.classList.add('hidden');
+  }
+}
+
+function enableQRScanner() {
+  const scanQRBtn = document.getElementById('scan-qr-btn');
+  const qrScannerContainer = document.getElementById('qr-scanner-container');
+  if (scanQRBtn && qrScannerContainer) {
+    // Show the container when not in transfer
+    qrScannerContainer.classList.remove('hidden');
+    scanQRBtn.disabled = false;
+    scanQRBtn.textContent = 'Scan QR Code';
+    scanQRBtn.style.opacity = '1';
+    scanQRBtn.style.cursor = 'pointer';
+  }
+}
+
+// Add timeout to detect stuck scanning
+function startScanTimeout() {
+  if (scanTimeout) clearTimeout(scanTimeout);
+  
+  scanTimeout = setTimeout(() => {
+    if (qrScanning) {
+      console.log('Scan timeout - restarting...');
+      const statusText = document.getElementById('qr-status-text');
+      statusText.textContent = 'Restarting scanner...';
+      stopQRScanning();
+      setTimeout(() => {
+        if (!qrScanning) startQRScanning();
+      }, 1000);
+    }
+  }, 8000); // 8 second timeout
+}
+
+async function startQRScanning() {
+  const video = document.getElementById('qr-video');
+  const statusText = document.getElementById('qr-status-text');
+  const scannerContainer = document.querySelector('.scanner-container');
+  
+  try {
+    statusText.textContent = 'Accessing camera...';
+    statusText.className = 'status-text';
+    
+    console.log('Requesting camera access...');
+    
+    // Request camera access with mobile-optimized constraints
+    qrStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment', // Prefer back camera
+        width: { ideal: 1280, min: 640 },
+        height: { ideal: 720, min: 480 }
+        // Removed torch and focusMode for better compatibility
+      }
+    });
+    
+    video.srcObject = qrStream;
+    
+    console.log('Camera stream acquired');
+    
+    statusText.textContent = 'Point camera at QR code';
+    statusText.className = 'status-text';
+    
+    // Start scanning after video loads
+    video.addEventListener('loadedmetadata', startQRScanLoop, { once: true });
+    
+  } catch (error) {
+    console.error('Camera error:', error);
+    statusText.textContent = 'Camera access denied or unavailable';
+    statusText.className = 'status-text status-error';
+    
+    // Show error-specific messages
+    if (error.name === 'NotAllowedError') {
+      statusText.textContent = 'Camera permission denied. Please allow camera access.';
+    } else if (error.name === 'NotFoundError') {
+      statusText.textContent = 'No camera found on this device.';
+    } else if (error.name === 'NotReadableError') {
+      statusText.textContent = 'Camera is being used by another application.';
+    } else if (error.name === 'OverconstrainedError') {
+      // Fallback to basic constraints
+      console.log('Trying fallback camera constraints...');
+      try {
+        qrStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        video.srcObject = qrStream;
+        video.addEventListener('loadedmetadata', startQRScanLoop, { once: true });
+        statusText.textContent = 'Camera ready (basic mode)';
+      } catch (fallbackError) {
+        statusText.textContent = 'Unable to access camera with any configuration';
+      }
+    }
+  }
+}
+
+function startQRScanLoop() {
+  qrScanning = true;
+  document.querySelector('.scanner-container').classList.add('scanning');
+  startScanTimeout(); // Start timeout monitor
+  scanQRFrame();
+}
+
+function stopQRScanning() {
+  qrScanning = false;
+  if (scanTimeout) {
+    clearTimeout(scanTimeout);
+    scanTimeout = null;
+  }
+  if (qrAnimationFrame) {
+    cancelAnimationFrame(qrAnimationFrame);
+  }
+  if (qrStream) {
+    qrStream.getTracks().forEach(track => track.stop());
+    qrStream = null;
+  }
+  document.querySelector('.scanner-container').classList.remove('scanning');
+}
+
+async function scanQRFrame() {
+  if (!qrScanning) return;
+  
+  const video = document.getElementById('qr-video');
+  const statusText = document.getElementById('qr-status-text');
+  
+  // Debug logging
+  console.log('Scanning frame...', {
+    video: !!video,
+    readyState: video ? video.readyState : 'no video',
+    videoWidth: video ? video.videoWidth : 'N/A',
+    videoHeight: video ? video.videoHeight : 'N/A'
+  });
+  
+  if (!video || video.readyState !== 4) {
+    console.log('Video not ready, scheduling next frame');
+    qrAnimationFrame = requestAnimationFrame(scanQRFrame);
+    return;
+  }
+  
+  try {
+    // Load jsQR library if not already loaded
+    await loadJsQR();
+    
+    if (!jsQR) {
+      console.error('jsQR library failed to load');
+      statusText.textContent = 'Scanner library failed to load';
+      statusText.className = 'status-text status-error';
+      return;
+    }
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+    
+    // Draw video frame to canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Scan for QR codes
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    console.log('Scanning image data...');
+    
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'attemptBoth' // Try both normal and inverted
+    });
+    
+    if (code) {
+      console.log('QR Code detected!', code);
+      // Valid QR code detected
+      statusText.textContent = 'QR code detected';
+      statusText.className = 'status-text status-success';
+      
+      // Process the QR code
+      processQRCode(code.data);
+      return;
+    } else {
+      console.log('No QR code found in frame');
+    }
+  } catch (error) {
+    console.error('Scanning error:', error);
+    statusText.textContent = 'Scanning error occurred';
+    statusText.className = 'status-text status-error';
+  }
+  
+  // Continue scanning
+  qrAnimationFrame = requestAnimationFrame(scanQRFrame);
+}
+
+function processQRCode(data) {
+  try {
+    // Stop scanning
+    stopQRScanning();
+    
+    const statusText = document.getElementById('qr-status-text');
+    statusText.textContent = 'Processing QR code...';
+    statusText.className = 'status-text status-success';
+    
+    console.log('Raw QR code data:', data);
+    
+    let roomCode = null;
+    
+    // Method 1: Check if it's a full URL with room parameter
+    try {
+      const url = new URL(data);
+      const params = new URLSearchParams(url.search);
+      roomCode = params.get('room');
+      
+      if (roomCode) {
+        console.log('Found room code in URL parameters:', roomCode);
+      }
+    } catch (urlError) {
+      // Not a valid URL, continue to other methods
+      console.log('Not a valid URL, trying other extraction methods');
+    }
+    
+    // Method 2: Extract last 6 characters if it looks like a room code
+    if (!roomCode) {
+      // Look for patterns like ?room=XXXXXX or /XXXXXX or XXXXXX at end
+      const patterns = [
+        /[?&]room=([A-Za-z0-9]{6})/,  // URL parameter
+        /\/([A-Za-z0-9]{6})(?:\?.*)?$/, // Path segment at end
+        /^([A-Za-z0-9]{6})$/           // Just the room code
+      ];
+      
+      for (const pattern of patterns) {
+        const match = data.match(pattern);
+        if (match) {
+          roomCode = match[1];
+          console.log('Extracted room code using pattern:', pattern, '->', roomCode);
+          break;
+        }
+      }
+    }
+    
+    // Method 3: Direct link redirection (last resort)
+    if (!roomCode && data.startsWith('http')) {
+      console.log('Attempting direct link redirection');
+      statusText.textContent = 'Redirecting to room...';
+      
+      setTimeout(() => {
+        window.location.href = data;
+      }, 1000);
+      return;
+    }
+    
+    if (roomCode) {
+      // Validate room code format (6 alphanumeric characters)
+      if (/^[A-Za-z0-9]{6}$/.test(roomCode)) {
+        roomCode = roomCode.toUpperCase(); // Normalize to uppercase
+        console.log('Valid room code extracted:', roomCode);
+        
+        // Valid drop room - close scanner and join room
+        statusText.textContent = `Joining room ${roomCode}...`;
+        statusText.className = 'status-text status-success';
+        
+        setTimeout(() => {
+          hideQRScanner();
+          // Auto-fill room code and switch to join view
+          const roomCodeInput = document.getElementById('room-code-input');
+          if (roomCodeInput) {
+            roomCodeInput.value = roomCode;
+            switchToJoinView();
+            // Auto-click join button
+            setTimeout(() => {
+              const joinBtn = document.getElementById('join-btn');
+              if (joinBtn) {
+                joinBtn.click();
+              }
+            }, 500);
+          }
+        }, 1000);
+      } else {
+        throw new Error('Invalid room code format');
+      }
+    } else {
+      // No valid room code found
+      throw new Error('No valid room code detected in QR code');
+    }
+    
+  } catch (error) {
+    console.error('QR code processing error:', error);
+    const statusText = document.getElementById('qr-status-text');
+    statusText.textContent = error.message || 'Invalid QR code format';
+    statusText.className = 'status-text status-error';
+    
+    // Restart scanning after delay
+    setTimeout(() => {
+      if (!qrScanning) {
+        startQRScanLoop();
+      }
+    }, 3000);
+  }
+}
+
+// Load jsQR library
+let jsQR;
+async function loadJsQR() {
+  if (jsQR) return jsQR;
+  
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    script.onload = () => {
+      jsQR = window.jsQR;
+      resolve(jsQR);
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// Initialize QR scanner UI when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  initializeQRScannerUI();
+  initializePWANavigation();
+  initializeNotifications();
+  // initializePWAInstall(); // Removed to prevent potential UI movement issues
+  // initializeFeatureTooltips(); // Removed to prevent UI movement issues
+});
+
+/*
+ * URL room code pre-fill  (?room=abc123)
+ */
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get("room");
+  if (code) {
+    // Show receive section first
+    receiveSection.classList.remove('hidden');
+    receiveSection.classList.add('slide-down-enter');
+    
+    // Trigger reflow
+    void receiveSection.offsetWidth;
+    
+    // Add active state for animation
+    receiveSection.classList.add('slide-down-enter-active');
+    
+    // Pre-fill room code
+    roomCodeInput.value = code.toUpperCase();
+    
+    // Auto-join after animations complete
+    setTimeout(() => {
+      // Focus on input first
+      roomCodeInput.focus();
+      // Then click join button
+      joinBtn.click();
+    }, 600); // Delay to ensure animations complete
+  }
+})();
+
+// Initialize PWA installation component
+function initializePWAInstall() {
+  // Only show install prompt for browsers that support it
+  if ('beforeinstallprompt' in window) {
+    // Load the PWA install component
+    const script = document.createElement('script');
+    script.src = '/src/components/pwa-install.js';
+    script.onload = () => {
+      if (typeof PWAInstallComponent !== 'undefined') {
+        const pwaInstall = new PWAInstallComponent();
+        pwaInstall.init();
+        console.log('PWA installation component initialized');
+      }
+    };
+    script.onerror = () => {
+      console.log('Failed to load PWA install component');
+    };
+    document.head.appendChild(script);
+  } else {
+    console.log('PWA installation not supported in this browser');
+  }
+}
+
+
+
+// Register service worker for PWA functionality
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((registration) => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch((error) => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
+</script>
+</body>
+</html>
